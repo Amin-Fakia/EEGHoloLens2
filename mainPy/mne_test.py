@@ -2,18 +2,15 @@
 import matplotlib.pyplot as plt
 import mne
 import numpy as np
+raw = mne.io.read_raw_edf("./mainPy/edf_data/Data_03_raw.edf",preload=True).drop_channels(['EEG CM-Pz','EEG X1-Pz','EEG X2-Pz','EEG X3-Pz', 'Trigger'])
 
-from matplotlib.animation import FuncAnimation
-from vedo import show, interactive
+data = raw.get_data()
+print(data[0])
 
-
-
-raw = mne.io.read_raw_edf("Eyes_Open_Eyes_Closed_filtered.edf",preload=True).drop_channels(['EEG CM-Pz','EEG X1-Pz','EEG X2-Pz','EEG X3-Pz'])
-
-new_events = mne.make_fixed_length_events(raw, start=5, stop=50, duration=2.)
-
-
-print(new_events)
-raw.plot(duration=100)
+ft = np.abs(np.fft.rfft([12,10]))
+ps = np.square(ft)
+print(sum(ft))
+frequency = np.linspace(0, 300/2, len(ps))
+plt.plot(frequency, ps,color='red')
 
 plt.show()

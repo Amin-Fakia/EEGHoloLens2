@@ -98,16 +98,16 @@ def animate_data_span(raw,mesh,pts):
 def get_mesh(s):
     if isinstance(s,str):
         mesh = Mesh(s)
-        mesh.triangulate().clean().normalize()
+        mesh.clean().normalize()
         mesh.rotateX(90)
         mesh.rotateZ(180)
-        mesh.origin(0,-0.01,-0.05) # mesh.origin(0,-0.015,-0.05)
+        mesh.origin(0,-0.01,-0.04) # mesh.origin(0,-0.015,-0.05)
         mesh.scale(0.09)#  mesh.scale(0.09)
         return mesh
-def get_sensor_3DLocations(l):
+def get_sensor_3DLocations(l,exl=[""]):
     pts = []
     for i, k in l.items():
-        if i != 'TRG':
+        if i not in exl:
             pts.append([k[0],k[1],k[2]])
     return pts
 def findMinD(x,pts,mesh):
@@ -130,8 +130,9 @@ def Linear_Interpolation(mesh,pts,data):
     
 def RBF_Interpolation(mesh,pts,data):
     x, y, z = np.split(np.array(pts), 3, axis=1)
+    
     itr = Rbf(x,y,z,data,function='gaussian')
-    xi, yi, zi = np.split(mesh.points(), 3, axis=1) 
+    xi, yi, zi = np.split(mesh.points(), 3, axis=1)
     return itr(xi,yi,zi)
 
 def plot_edf(raw):
@@ -155,7 +156,7 @@ def animate(mesh,pts,raw,t1,t2,f=1,text=''):
     vmin = min([min(i[t1:t2]) for i in data])
     #[t1:t2]
     vmax = max([max(i[t1:t2]) for i in data])
-    print("yo")
+    
     text = get_text(times[t1],times[t2])
     
     points= Points(pts,r=9,alpha=0.7,c='w')
@@ -195,7 +196,7 @@ def enhanced_animation(raw,mesh,pts):
     cursor = Cursor(ax)
     fig.canvas.mpl_connect('motion_notify_event', cursor.on_mouse_move)
     cid = fig.canvas.mpl_connect('button_press_event', cursor.on_mouse_click)
-    print(cid)
+    #print(cid)
     plot = show(interactive=False,bg='k')
     i = 0
     # while i < 9000:
@@ -207,5 +208,6 @@ def enhanced_animation(raw,mesh,pts):
     #     plot.remove(text2)
     
     plt.show()
+
         
     

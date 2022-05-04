@@ -11,19 +11,22 @@ from dsi_24_montage import ch_pos
 import scipy
 from scipy.signal import savgol_filter
 import easygui
+import os 
+dir_path = os.path.dirname(os.path.realpath(__file__))
 
 edf_file= easygui.fileopenbox()
 # Data_02_raw.edf
+headPath = f"{dir_path}/3dmodel/Head.obj"
+plot = Plotter(axes=0)
 
-head = "./3dmodel/Head.obj"
 raw = mne.io.read_raw_edf(edf_file ,preload=True).drop_channels(['EEG CM-Pz','EEG X1-Pz','EEG X2-Pz','EEG X3-Pz'])
 raw.filter(8,12)
-raw.plot(duration=100)
+#raw.plot(duration=100)
 fig, ax = plt.subplots(2)
+
 def get_times(raw):
     df = raw.to_data_frame()
     return df.iloc[:,0]
-
 def plot_window(data,sampling_rate,win_size,step):
     times = [i*(1/sampling_rate) for i in range(len(data))]
     ft = np.abs(np.fft.rfft(data))
@@ -152,30 +155,17 @@ dota = dota_smooth
 
 from dsi_24_montage import chnls
 plot_data(dota[13])
-# with open("output.txt", "w") as txt_file:
-
-#     txt_file.write(str(dota)) # works with any number of elements in a line
-
-
-
-# dete = [[0]*len(dota[0])] * len(dota)
-# dete[13] = [d for d in dota[13]]
-# dete[14] = [d for d in dota[14]]
-
-
-
-# TODO: delete this
-
 
 #slider
 
-mesh = get_mesh(head)
+mesh = get_mesh(headPath)
 t1,t2 = 0,len(dota[0])
 vmin = min([min(i[t1:t2]) for i in dota])
 vmax = max([max(i[t1:t2]) for i in dota])
-sensor_pts = get_sensor_3DLocations(ch_pos)
+sensor_pts = get_sensor_3DLocations(ch_pos,"TRG")
 intpr = RBF_Interpolation(mesh,sensor_pts,[j[0] for j in dota])
 mesh.cmap('jet', intpr, vmin=-vmax, vmax=vmax).addScalarBar(pos=(0.8,0.3))
+pts = Points(sensor_pts,r=9)
 def slider1(widget, event):
     value = int(widget.GetRepresentation().GetValue())
     
@@ -216,7 +206,7 @@ def save_btn():
     
     
 
-plot = Plotter(axes=0)
+#plot = Plotter(axes=0)
 sl = plot.addSlider2D(slider1, 0, len(dota[0])-1, value=0,
                pos="bottom-right", title="Window Number",c='k')
 #scl = mesh.addScalarBar(pos=(0.8,0.15))
@@ -243,7 +233,7 @@ sv_btn = plot.addButton(
     italic=False,
 )
 txt1 = Text2D(f"{((len(data[0])/300)/len(dota[0]))}",pos="bottom-left",c='w')
-plot.show(mesh,txt1,bg='w')
+plot.show(mesh,txt1,pts ,bg='w')
 plot.close()
 
 
