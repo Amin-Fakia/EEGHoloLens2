@@ -11,47 +11,53 @@ using UnityEngine.Networking;
 using Newtonsoft.Json;
 using System.Threading;
 using System.Text;
-
+using TMPro;
 public class socketLive : MonoBehaviour
 {
    Thread mThread;
-      public string connectionIP = "127.0.0.1";
-      public int connectionPort = 8500;
+      //public string connectionIP = "127.0.0.1";
+      public int connectionPort = 8050;
       IPAddress localAdd;
       
       TcpListener listener;
       TcpClient client;
       bool running;
     public List<List<double>> myColorValues;
-    public bool startListen;
+    //public bool startListen;
     Color[] colors;
     Root stuff;
 
     private string baseName;
     Mesh mesh;
+    TextMeshPro textmeshPro;
     Vector3[] vertices;
     TextAsset asset;
+    private int idx;
     [System.Serializable]
    public class Root
     {
+        public int win_idx;
         public List<List<double>> mylist { get; set; }
     }
-    public void just_play()
-    {
+    // public void just_play()
+    // {
         
-        startListen= !startListen;
-        Debug.Log(running);
+    //     startListen= !startListen;
+    //     Debug.Log(running);
         
-    }
+    // }
     void Start()
     {
-        startListen = false;
+        textmeshPro = GameObject.FindWithTag("s_start").GetComponent<TextMeshPro>();
+        this.idx = 0;
+        textmeshPro.SetText("Window Number: " + this.idx);
+        //startListen = false;
         Application.targetFrameRate = 60;
         this.mesh = this.GetComponent<MeshFilter>().mesh;
         this.vertices = mesh.vertices;
 
         this.colors = new Color[vertices.Length];
-        
+        // print(mesh.vertices.Length);
         mesh.RecalculateNormals();
         ThreadStart ts = new ThreadStart(GetInfo);
         mThread = new Thread(ts);
@@ -62,12 +68,14 @@ public class socketLive : MonoBehaviour
     void Update()
     {
         this.mesh.colors = colors;
+        this.textmeshPro.SetText("Window Number: " + this.idx);
   
         
     }
     public static string GetLocalIPAddress()
       {
           var host = Dns.GetHostEntry(Dns.GetHostName());
+          print(host);
           foreach (var ip in host.AddressList)
           {
               if (ip.AddressFamily == AddressFamily.InterNetwork)
@@ -79,22 +87,39 @@ public class socketLive : MonoBehaviour
       }
     void GetInfo()
       {
-          localAdd = IPAddress.Parse(connectionIP);
+        
+        //   localAdd = IPAddress.Parse(connectionIP);
           listener = new TcpListener(IPAddress.Any, connectionPort);
           listener.Start();
-
+        
           client = listener.AcceptTcpClient();
           running = true;
+
 
           
           while (running)
           {
               try {
+                    listener.Start();
+                    
+                    client = listener.AcceptTcpClient();
                   Connection();
               } catch(Exception e) {
+                running = false;
+                
+                print(e);
+                
+                // if (stop_idx >60*5){
+
+                //     client.Close();
+                //     listener.Stop();
+                //     running = false;
+                    
+                // }
+                //   //listener.AcceptTcpClient();
+                //   stop_idx++;
                   
-                  client = listener.AcceptTcpClient();
-                  
+
                 //   client.Close();
                 // listener.Stop();
               }
@@ -112,6 +137,7 @@ public class socketLive : MonoBehaviour
       {
           NetworkStream nwStream = client.GetStream();
           byte[] buffer = new byte[70940];
+          
         // TODO: MUST CHANGE
           int bytesRead = nwStream.Read(buffer, 0, 70940);
           // Passing data as strings, not ideal but easy to use
@@ -129,40 +155,16 @@ public class socketLive : MonoBehaviour
                   
                   stuff = JsonConvert.DeserializeObject<Root>(dataReceived);
                   for (int i = 0; i < vertices.Length; i++) {
-                        //colors[i] = Color.red;
+                        
                         colors[i] = new Color((float)stuff.mylist[i][0]/255,(float)stuff.mylist[i][1]/255,(float)stuff.mylist[i][2]/255,(float)stuff.mylist[i][3]/255);
                     }
+                    //print(stuff.win_idx);
+                  this.idx = stuff.win_idx;
                   
-                    //print("yo");
-                  // Convert the received string of data to the format we are using
-                  //position = 10f * StringToVector3(dataReceived);
-                  //print("moved");
-                  
-                  //nwStream.Write(buffer, 0, bytesRead);
               }
           } 
       }
 
-      // Use-case specific function, need to re-write this to interpret whatever data is being sent
-    //   public static Vector3 StringToVector3(string sVector)
-    //   {
-    //       // Remove the parentheses
-    //       if (sVector.StartsWith("(") && sVector.EndsWith(")"))
-    //       {
-    //           sVector = sVector.Substring(1, sVector.Length - 2);
-    //       }
-
-    //       // Split the elements into an array
-    //       string[] sArray = sVector.Split(',');
-
-    //       // Store as a Vector3
-    //       Vector3 result = new Vector3(
-    //           float.Parse(sArray[0]),
-    //           float.Parse(sArray[1]),
-    //           float.Parse(sArray[2]));
-
-    //       return result;
-    //   }
 
 
     
